@@ -133,13 +133,6 @@ function filter_sdm_post_type_content( $content ) {
 			$content .= '<div class="sdm_post_download_count">' . $download_count_string . '</div>';
 		}
 
-		$content .= '<div class="sdm_post_description">' . $isset_item_description . '</div>';
-
-		//This hook can be used to add content below the description
-		$params   = array( 'id' => $id );
-		$content .= apply_filters( 'sdm_cpt_below_download_description', '', $params );
-
-		//Check if the button of the single download page is disabled.
 		$sdm_item_hide_dl_button_single_download_page = get_post_meta( $id, 'sdm_item_hide_dl_button_single_download_page', true );
 		if ( $sdm_item_hide_dl_button_single_download_page ) {
 			//the download button is disabled.
@@ -158,6 +151,32 @@ function filter_sdm_post_type_content( $content ) {
 				)
 			) . '</div>';
 		}
+
+		$content .= '<div class="sdm_post_description">' . $isset_item_description . '</div>';
+
+		//This hook can be used to add content below the description
+		$params   = array( 'id' => $id );
+		$content .= apply_filters( 'sdm_cpt_below_download_description', '', $params );
+
+		//Check if the button of the single download page is disabled.
+		// $sdm_item_hide_dl_button_single_download_page = get_post_meta( $id, 'sdm_item_hide_dl_button_single_download_page', true );
+		// if ( $sdm_item_hide_dl_button_single_download_page ) {
+		// 	//the download button is disabled.
+		// 	$content .= '<div class="sdm_post_single_download_page_disabled_dl_button_msg">';
+		// 	$msg      = '<p>' . __( 'The admin of this site has disabled the download button for this page.', 'simple-download-monitor' ) . '</p>';
+		// 	$content .= apply_filters( 'sdm_post_single_download_page_disabled_dl_button_msg', $msg );
+		// 	$content .= '</div>';
+		// } else {
+		// 	$download_link = '<div class="sdm_download_link">' . $download_button_code . '</div>';
+		// 	$content      .= '<div class="sdm_post_download_section">' . apply_filters(
+		// 		'sdm_single_page_dl_link',
+		// 		$download_link,
+		// 		array(
+		// 			'id'          => $id,
+		// 			'button_text' => $button_text_string,
+		// 		)
+		// 	) . '</div>';
+		// }
 
 		if ( ! empty( $isset_item_file_size ) ) {//Show file size info
 			$content .= '<div class="sdm_post_download_file_size">';

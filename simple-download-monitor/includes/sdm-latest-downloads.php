@@ -64,7 +64,16 @@ function sdm_show_latest_downloads( $args ) {
 		} elseif ( $fancy == '3' ) {
 			include_once WP_SIMPLE_DL_MONITOR_PATH . 'includes/templates/fancy3/sdm-fancy-3.php';
 			$output .= sdm_generate_fancy3_latest_downloads_display_output( $get_posts, $args );
+
+		} elseif ( $fancy == '4' ) {
+
+			include_once WP_SIMPLE_DL_MONITOR_PATH . 'includes/templates/fancy4/sdm-fancy-4.php';
+
+			$output .= sdm_generate_fancy4_latest_downloads_display_output( $get_posts, $args );
+
 		}
+
+
 
 		// Return results
 		return apply_filters( 'sdm_latest_downloads_shortcode_output', $output, $args, $get_posts );
