@@ -378,7 +378,34 @@ padding: 5px 5px 5px 10px;
     -webkit-box-shadow: 0 1px 1px #ebebeb, inset 0 1px 0 #f3f3f3;
     -moz-box-shadow: 0 1px 1px #ebebeb, inset 0 1px 0 #f3f3f3;
     box-shadow: 0 1px 1px #ebebeb, inset 0 1px 0 #f3f3f3;
+
 }
+
+
+.sdm_download.special{
+    border: 3px solid var(--global--color-primary);    
+    color: var(--global--color-primary);
+    padding: 5px 10px;
+    display: inline-block;
+    text-decoration: none !important;
+    text-align: center;
+    margin: auto;
+    width:100%;
+    min-height: 50px;
+    font-family: var(--button--font-family);
+    font-size:var(--button--font-size);
+    font-weight: var(--button--font-weight);
+    padding-top: calc(0.667em + 2px);
+    padding-bottom: calc(0.667em + 2px);
+    border-radius:0;
+}
+
+.sdm_download.special:hover{
+    color: var(--global--color-background);
+    background-color: var(--global--color-primary);  
+
+}
+
 
 .sdm_download.disabled{
     background: rgb(223, 223, 223);

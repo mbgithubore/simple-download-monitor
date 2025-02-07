@@ -19,6 +19,7 @@ function sdm_get_download_button_colors() {
 			'pink'     => __( 'Pink', 'simple-download-monitor' ),
 			'orange'   => __( 'Orange', 'simple-download-monitor' ),
 			'white'    => __( 'White', 'simple-download-monitor' ),
+			'special'    => __( 'Special', 'simple-download-monitor' ),
 		)
 	);
 }

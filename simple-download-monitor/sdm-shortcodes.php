@@ -75,6 +75,7 @@ function sdm_create_download_shortcode( $atts ) {
 				'show_version' => '',
 				'more_details_url' => "", 
 				'more_details_anchor' => __('More Details', 'simple-download-monitor'),
+				'cols' 		   => '2',
 			),
 			$atts
 		)
@@ -207,12 +208,15 @@ function sdm_handle_category_shortcode( $args ) {
 			array(
 				'category_slug' => '',
 				'category_id'   => '',
+				'category2_slug' => '',
+				'category2_id'   => '',
 				'fancy'         => '0',
 				'button_text'   => '',
 				'new_window'    => '',
 				'orderby'       => 'post_date',
 				'order'         => 'DESC',
 				'pagination'    => '',
+				'cols'		    => '2',
 			),
 			$args
 		)
@@ -230,6 +234,21 @@ function sdm_handle_category_shortcode( $args ) {
 	// If both category slug AND category id are defined... return error
 	if ( ! empty( $category_slug ) && ! empty( $category_id ) ) {
 		return '<p style="color: red;">' . __( 'Error! Please enter a category slug OR id; not both.', 'simple-download-monitor' ) . '</p>';
+	}
+
+	// // If category2 slug and category id are empty.. return error
+	// if ( empty( $category2_slug ) && empty( $category2_id ) && empty( $args['show_all'] ) ) {
+	// 	return '<p style="color: red;">' . __( 'Error! You must enter a category2 slug OR a category2 id with this shortcode. Refer to the documentation for usage instructions.', 'simple-download-monitor' ) . '</p>';
+	// }
+
+	// If both category2 slug AND category id are defined... return error
+	if ( ! empty( $category2_slug ) && ! empty( $category2_id ) ) {
+		return '<p style="color: red;">' . __( 'Error! Please enter a category2 slug OR id; not both.', 'simple-download-monitor' ) . '</p>';
+	}
+
+	// Cas batard ou on a rempli un slug ou id 2 mais pas les 1
+	if(( empty( $category_slug ) && empty( $category_id ) && empty( $args['show_all'] ) ) && ( ! empty( $category2_slug ) || ! empty( $category2_id ) )) {
+		return '<p style="color: red;">' . __( 'Error! You cannot enter category2 id or slug without caterory1', 'simple-download-monitor' ) . '</p>';
 	}
 
 	// Else setup query arguments for category_slug
@@ -257,16 +276,67 @@ function sdm_handle_category_shortcode( $args ) {
 		);
 	}
 
+	// Else setup query arguments for category2_slug
+	if ( ! empty( $category2_slug ) && empty( $category2_id ) ) {
+
+		$field2 = 'slug';
+
+		$terms2 = array_filter(
+			explode( ',', $category2_slug ),
+			function( $value ) {
+				return ! empty( $value ) ? trim( $value ) : false;
+			}
+		);
+	}
+	// Else setup query arguments for category2_id
+	elseif ( ! empty( $category2_id ) && empty( $category2_slug ) ) {
+
+		$field2 = 'term_id';
+		//$terms = $category2_id;
+		$terms2 = array_filter(
+			explode( ',', $category2_id ),
+			function( $value ) {
+				return ! empty( $value ) ? trim( $value ) : false;
+			}
+		);
+	}
+
 	if ( isset( $args['show_all'] ) ) {
 		$tax_query = array();
 	} else {
-		$tax_query = array(
-			array(
-				'taxonomy' => 'sdm_categories',
-				'field'    => $field,
-				'terms'    => $terms,
-			),
-		);
+		// $tax_query = array(
+		// 	array(
+		// 		'taxonomy' => 'sdm_categories',
+		// 		'field'    => $field,
+		// 		'terms'    => $terms,
+		// 	),
+		// );
+		if (empty( $terms2 ))
+		{ // cas avec une seule category 
+			$tax_query = array(
+				array(
+					'taxonomy' => 'sdm_categories',
+					'field'    => $field,
+					'terms'    => $terms,
+				),
+			);
+		}
+		else
+		{ // cas avec category2 remply 
+			$tax_query = array(
+				'relation' => 'AND',
+				array(
+					'taxonomy' => 'sdm_categories',
+					'field'    => $field,
+					'terms'    => $terms,
+				),
+				array(
+					'taxonomy' => 'sdm_categories',
+					'field'    => $field2,
+					'terms'    => $terms2,
+				),
+			);
+		}
 	}
 
 	// For pagination
@@ -279,6 +349,8 @@ function sdm_handle_category_shortcode( $args ) {
 	} else {
 		$posts_per_page = 9999;
 	}
+
+	// on va fusionner la categorie 2 en plus de la 1 si il y a lieu
 
 	// Query cpt's based on arguments above
 	$get_posts_args = array(
@@ -368,6 +440,12 @@ function sdm_handle_category_shortcode( $args ) {
 		} elseif ( $fancy == '3' ) {
 			include_once 'includes/templates/fancy3/sdm-fancy-3.php';
 			$output .= sdm_generate_fancy3_category_display_output( $get_posts, $args );
+		} elseif ( $fancy == '4' ) {
+			include_once 'includes/templates/fancy4/sdm-fancy-4.php';
+			$output .= sdm_generate_fancy4_category_display_output( $get_posts, $args );
+		} elseif ( $fancy == '5' ) {
+			include_once 'includes/templates/fancy5/sdm-fancy-5.php';
+			$output .= sdm_generate_fancy5_category_display_output( $get_posts, $args );
 		}
 
 		// Pagination related
