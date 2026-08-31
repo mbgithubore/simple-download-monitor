@@ -2,9 +2,9 @@
 Contributors: Tips and Tricks HQ, Ruhul Amin, josh401, mbrsolution, alexanderfoxc
 Donate link: https://www.tipsandtricks-hq.com
 Tags: download, downloads, count, counter, tracker
-Requires at least: 5.5
-Tested up to: 6.7
-Stable tag: 3.9.28
+Requires at least: 6.0
+Tested up to: 7.1
+Stable tag: 4.1.0
 License: GPLv2 or later
 
 Easily manage downloadable files and monitor downloads of your digital files from your WordPress site.
@@ -74,10 +74,12 @@ https://www.youtube.com/watch?v=SjVaanbulRU
 * There is an option to show an ajax file tree browser so your visitors can browse all your files and download the ones they want.
 * Option to ignore download count from bots.
 * Option to add Google reCAPTCHA to your download buttons.
-* Option to add Terms and Condtions to your download buttons.
+* Option to add Cloudflare Turnstile CAPTCHA to your download buttons.
+* Option to add Terms and Conditions to your download buttons.
 * Ability to easily clone/copy your existing download items.
 * Ability to insert Adsense or other Ad code inside the download item display.
 * Gutenberg block to insert download now buttons on a post or page.
+* Option to override the default template by placing a custom template file in the active theme’s directory.
 * The stats menu can show you the top downloads, downloads by date, country, browser etc.
 
 View more details on the [download monitor plugin](https://simple-download-monitor.com/) page.
@@ -94,6 +96,7 @@ The following language translations are already available for the download monit
 * Russian
 * Dutch
 * Portuguese (Brasil)
+* Hebrew
 
 = Simple Download Monitor Plugin Usage =
 
@@ -119,7 +122,7 @@ You can view all of your existing downloads from the "Downloads->Downloads" inte
 
 **C) Create a download button**
 
-Create a new post/page and click the "SDM Downlaods" TinyMCE button to insert a shortcode (This button will only show up if you haven't unchecked it in the settings). You can choose to display your download with a nice looking box or just a plain download link/button. 
+Create a new post/page and click the "SDM Downlaods" TinyMCE button to insert a shortcode (This button will only show up if you haven't unchecked it in the settings). You can choose to display your download with a nice looking box or just a plain download link/button.
 
 Example Shortcode Usage:
 
@@ -133,16 +136,16 @@ Example Shortcode Usage:
 
 You can check the download stats from the "Downloads->Logs" interface. It shows the number of downloads for each files, IP address of the user who downloaded it, date and time of the download.
 
-** 3rd Party or External Libraries/Services **
+== 3rd Party or External Libraries/Services ==
 
 The plugin uses the Google Charts library to show the download count charts in the admin interface (if you use the stats menu of the plugin). You can see more details about this library at the following URL:
 https://developers.google.com/chart/
 
-** Detailed Usage Documentation **
+== Detailed Usage Documentation ==
 
 View more usage instructions on the [Download Monitor Plugin](https://simple-download-monitor.com/) page.
 
-** Github Repository **
+== Github Repository ==
 
 https://github.com/Arsenal21/simple-download-monitor
 
@@ -166,13 +169,13 @@ Yes.
 = What file formats can I upload? =
 You can pretty much upload all common file types.
 
-= Can I use external file URLs? = 
+= Can I use external file URLs? =
 Yes, you can use both local paths and external URLs.
 
-= Can I password protect a downloadable file? = 
+= Can I password protect a downloadable file? =
 Yes.
 
-= Can I add additional security to protect my downloadable files? = 
+= Can I add additional security to protect my downloadable files? =
 You can add additional security to your downloadable files with the [Enhanced File Protection Feature](https://simple-download-monitor.com/enhanced-file-protection-securing-your-downloads/).
 
 = Can I show the file download counts to my visitors? =
@@ -191,10 +194,85 @@ Yes.
 Yes
 
 == Screenshots ==
-
-For screenshots please visit the [download monitor plugin page](https://www.tipsandtricks-hq.com/simple-wordpress-download-monitor-plugin)
+1. The download item display shortcode in action with the fancy 1 template.
+2. The download item display shortcode in action with the fancy 2 template.
+3. The Downloads menu in the WordPress admin dashboard.
+4. The download item add/edit page in the WordPress admin dashboard.
 
 == Changelog ==
+
+= 4.1.0 =
+- Fixed a PHP 8.2+ deprecation warning by updating legacy parameter handling for better forward compatibility.
+- Updated Gutenberg block compatibility for WordPress 7.1.
+
+= 4.0.9 =
+- Added a new settings option 'Allow Downloads of Unpublished Items' that the admin can use to allow downloading of unpublished download items.
+- Added a new filter hook 'sdm_is_download_item_viewable' to allow developers to modify/customize the download item viewability check.
+
+= 4.0.8 =
+- Added checks/guards so unpublished items cannot be downloaded via direct link.
+
+= 4.0.7 =
+- The 'Export Logs' option now works with the 'Admin Dashboard Access Control' feature.
+
+= 4.0.6 =
+- Added output escaping functions to the fancy display templates.
+
+= 4.0.5 =
+- Added output escaping functions to the 'sdm_show_download_info' shortcode.
+
+= 4.0.4 =
+- Added a new parameter 'search_button_text' to the 'sdm_search_form' shortcode. This parameter allows you to set the text of the search button in the search form.
+- The 'button_text' parameter of the search shortcode can be used with the fancy templates to set the download button text in the search results.
+
+= 4.0.3 =
+- Added filtering by Download ID option to the stats menu.
+
+= 4.0.2 =
+- Added help text in the Advanced settings to mention that we have Cloudflare Turnstile CAPTCHA support now.
+- Fixed an issue where the custom 'Button Text' field value from the download edit page was not being applied correctly when using the category shortcode.
+
+= 4.0.1 =
+- Added a new filter hook 'sdm_load_template_files' to allow developers to modify/customize the fancy display templates.
+- Improved the new template loading code structure to make it easier to copy and modify templates.
+
+= 4.0.0 =
+- Added functionality to override the template by using a custom template file in the active theme's folder.
+- Amazon bot filter added to the bot detection function.
+- Added a filter hook 'sdm_get_ip_address' to allow modification of the detected IP address.
+- Category shortcode output for fancy 0 has been moved into a dedicated function.
+- Added {ip_address} email merge tag to the email notification addon.
+- Added a new filter hook 'sdm_download_window_target' to allow customization of the download link's window target.
+
+= 3.9.35 =
+- Added output escaping to a parameter in the sdm_download_link shortcode.
+
+= 3.9.34 =
+- Enhanced security by adding proper sanitization and escaping to the sort order and orderBy parameters in the export logs feature.
+
+= 3.9.33 =
+- Added escaping to the download thumbnail field for better security.
+
+= 3.9.32 =
+- Readme file updated to fix the formatting of some sections.
+- Added Hebrew translation to the plugin.
+- Download via direct link feature is now compatible with the various CAPTCHA options.
+
+= 3.9.31 =
+- Cloudflare Turnstile CAPTCHA support added. View the [Cloudflare Turnstile CAPTCHA documentation](https://simple-download-monitor.com/using-cloudflare-turnstile-captcha-with-the-simple-download-monitor/) for more details.
+- Updated the ip address retrieval method for better server compatibility.
+- Added a new filter hook 'sdm_ip_address_header_order' to allow customization of the order of the IP address header.
+
+= 3.9.30 =
+- The Google reCAPTCHA v3 feature is now also available for single download posts.
+
+= 3.9.29 =
+- Added Google reCaptcha v3 support. It can be enabled from the advanced settings menu of the plugin.
+- Added a new filter hook 'sdm_download_button_text_filter' to allow customization of the download button text via custom code.
+- Added a new filter hook 'sdm_shortcode_meta_box_content' to allow addons to add content to the shortcode meta box.
+- Added a new filter hook 'sdm_before_download_button' to allow addons to add content before the download button.
+- Added a new action hook 'sdm_download_via_direct_post' to allow addons to do tasks when download request via direct post is received.
+- Added hooks that will allow us to add support for Cloudflare Turnstile in the future.
 
 = 3.9.28 =
 - Fixed a minor issue in the newly added admin-side JavaScript code for the logs export feature.
@@ -226,7 +304,7 @@ For screenshots please visit the [download monitor plugin page](https://www.tips
 = 3.9.24 =
 - New settings added to allow the admin to specify if other WP User roles can view the plugin's admin dashboard.
 - Added a new shortcode parameter (more_detail_url) that can bused to show a link below the description section of the fancy 1 and 2 templates.
-- The 'more details' Shortcode usage example is available in the [documentation here](https://simple-download-monitor.com/miscellaneous-shortcodes-and-shortcode-parameters/#showing-a-more-details-link) 
+- The 'more details' Shortcode usage example is available in the [documentation here](https://simple-download-monitor.com/miscellaneous-shortcodes-and-shortcode-parameters/#showing-a-more-details-link)
 - Fixed an issue with the single entry log delete function.
 - Fixed the custom download button text issue with the fancy 1 & 2 templates.
 - Fixed an issue with the specific items logs menu now showing correctly.
@@ -271,7 +349,7 @@ For screenshots please visit the [download monitor plugin page](https://www.tips
 - The thumbnail alt filters now also passes the download ID as an argument.
 - Removed a PHP notice related to PHP8.
 
-= 3.9.15 = 
+= 3.9.15 =
 - Fixed an issue with the "Quick Edit" link in the downloads menu hanging.
 - Added a new utility function in the debug logging class.
 

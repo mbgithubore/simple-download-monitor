@@ -97,6 +97,7 @@ function sdm_get_password_entry_form( $id, $args = array(), $class = '' ) {
 	//Check if new window is enabled
 	$new_window    = get_post_meta( $id, 'sdm_item_new_window', true );
 	$window_target = empty( $new_window ) ? '' : ' target="_blank"';
+	$window_target = apply_filters('sdm_download_window_target', $window_target);
 
 	//Form code
 	$data .= '<form action="' . $action_url . '" method="post" id="' . $uuid . '" class="sdm-download-form"' . $window_target . '>';
@@ -108,7 +109,7 @@ function sdm_get_password_entry_form( $id, $args = array(), $class = '' ) {
 	$data .= sdm_get_checkbox_for_termsncond();
 
 	$data .= '<span class="sdm-download-button">';
-	$data .= '<a href="#" name="sdm_dl_pass_submit" class="pass_sumbit sdm_pass_protected_download sdm_download_with_condition ' . esc_attr($class) . '">' . $button_text_string . '</a>';
+	$data .= '<a href="#" name="sdm_dl_pass_submit" class="pass_sumbit sdm_pass_protected_download sdm_download_with_condition ' . esc_attr($class) . '">' . esc_attr($button_text_string) . '</a>';
 	$data .= '</span>';
 	$data .= '<input type="hidden" name="download_id" value="' . $id . '" />';
 	$data .= '</form>';
@@ -125,18 +126,37 @@ function sdm_get_password_entry_form( $id, $args = array(), $class = '' ) {
  */
 function sdm_get_ip_address( $ignore_private_and_reserved = false ) {
 	$flags = $ignore_private_and_reserved ? ( FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) : 0;
-	foreach ( array( 'HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR' ) as $key ) {
+	$header_order = array(
+		'HTTP_X_REAL_IP', //Nginx/FastCGI
+		'HTTP_X_FORWARDED_FOR', //Most proxies
+		'HTTP_CLIENT_IP',
+		'HTTP_X_FORWARDED', 
+		'HTTP_X_CLUSTER_CLIENT_IP', 
+		'HTTP_FORWARDED_FOR', 
+		'HTTP_FORWARDED', 
+		'REMOTE_ADDR' //Fallback (might be proxy IP)
+	);
+	//Trigger the filter hook to allow other plugins to modify the header order.
+	$header_order = apply_filters('sdm_ip_address_header_order', $header_order);
+
+	//Loop through the headers and check for a valid IP address
+	foreach ( $header_order as $key ) {
 		if ( array_key_exists( $key, $_SERVER ) === true ) {
+			//X-Forwarded-For can contain multiple IPs, take the first one.
 			foreach ( explode( ',', $_SERVER[ $key ] ) as $ip ) {
 				$ip = trim( $ip ); // just to be safe
 
 				if ( filter_var( $ip, FILTER_VALIDATE_IP, $flags ) !== false ) {
+					//Filter hook to allow modification of the detected IP address.
+					$ip = apply_filters('sdm_get_ip_address', $ip);
 					return $ip;
 				}
 			}
 		}
 	}
-	return null;
+	//No valid IP found. Filter hook.
+	$ip = apply_filters('sdm_get_ip_address', '');
+	return $ip;
 }
 
 /**
@@ -296,7 +316,7 @@ function sdm_get_logged_in_user() {
 
 // Checks if current visitor is a bot
 function sdm_visitor_is_bot() {
-	$bots = array( 'archiver', 'baiduspider', 'bingbot', 'binlar', 'casper', 'checkprivacy', 'clshttp', 'cmsworldmap', 'comodo', 'curl', 'diavol', 'dotbot', 'DuckDuckBot', 'Exabot', 'email', 'extract', 'facebookexternalhit', 'feedfinder', 'flicky', 'googlebot', 'grab', 'harvest', 'httrack', 'ia_archiver', 'jakarta', 'kmccrew', 'libwww', 'loader', 'MJ12bot', 'miner', 'msnbot', 'nikto', 'nutch', 'planetwork', 'purebot', 'pycurl', 'python', 'scan', 'skygrid', 'slurp', 'sucker', 'turnit', 'vikspider', 'wget', 'winhttp', 'yandex', 'yandexbot', 'yahoo', 'youda', 'zmeu', 'zune', 'Sidetrade', 'AhrefsBot' );
+	$bots = array( 'archiver', 'baiduspider', 'bingbot', 'binlar', 'casper', 'checkprivacy', 'clshttp', 'cmsworldmap', 'comodo', 'curl', 'diavol', 'dotbot', 'DuckDuckBot', 'Exabot', 'email', 'extract', 'facebookexternalhit', 'feedfinder', 'flicky', 'googlebot', 'grab', 'harvest', 'httrack', 'ia_archiver', 'jakarta', 'kmccrew', 'libwww', 'loader', 'MJ12bot', 'miner', 'msnbot', 'nikto', 'nutch', 'planetwork', 'purebot', 'pycurl', 'python', 'scan', 'skygrid', 'slurp', 'sucker', 'turnit', 'vikspider', 'wget', 'winhttp', 'yandex', 'yandexbot', 'yahoo', 'youda', 'zmeu', 'zune', 'Sidetrade', 'AhrefsBot', 'Amazonbot' );
 
 	$isBot = false;
 
@@ -333,16 +353,22 @@ function sdm_get_download_form_with_recaptcha( $id, $args = array(), $class = ''
 
 	$new_window    = get_post_meta( $id, 'sdm_item_new_window', true );
 	$window_target = empty( $new_window ) ? '' : ' target="_blank"';
+	$window_target = apply_filters('sdm_download_window_target', $window_target);
 
 	$data = '<form action="' . $action_url . '" method="post" class="sdm-g-recaptcha-form sdm-download-form"' . esc_attr($window_target) . '>';
 
 	$data .= '<div class="sdm-recaptcha-button">';
-	$data .= '<div class="g-recaptcha sdm-g-recaptcha"></div>';
+
+    if (sdm_is_recaptcha_v3_enabled()){
+	    $data .= sdm_get_recaptcha_v3_html();
+    } else {
+		$data .= '<div class="g-recaptcha sdm-g-recaptcha"></div>';
+    }
 
 	//Check if Terms & Condition enabled
 	$data .= sdm_get_checkbox_for_termsncond();
 
-	$data .= '<a href="#" class="' . esc_attr($class) . ' sdm_download_with_condition">' . $button_text_string . '</a>';
+	$data .= '<a href="#" class="' . esc_attr($class) . ' sdm_download_with_condition">' . esc_attr($button_text_string) . '</a>';
 	$data .= '</div>';
 	$data .= '<input type="hidden" name="download_id" value="' . $id . '" />';
 	$data .= '</form>';
@@ -350,11 +376,11 @@ function sdm_get_download_form_with_recaptcha( $id, $args = array(), $class = ''
 }
 
 function sdm_get_download_with_recaptcha() {
-	$main_advanced_opts = get_option( 'sdm_advanced_options' );
-	$recaptcha_enable   = isset( $main_advanced_opts['recaptcha_enable'] ) ? true : false;
-	if ( $recaptcha_enable ) {
+	if ( sdm_is_recaptcha_v3_enabled() ) {
+        return sdm_get_recaptcha_v3_html();
+	} else if (sdm_is_recaptcha_v2_enabled()) {
 		return '<div class="g-recaptcha sdm-g-recaptcha"></div>';
-	}
+    }
 	return '';
 }
 
@@ -386,11 +412,12 @@ function sdm_get_download_form_with_termsncond( $id, $args = array(), $class = '
 
 	$new_window    = get_post_meta( $id, 'sdm_item_new_window', true );
 	$window_target = empty( $new_window ) ? '' : ' target="_blank"';
+	$window_target = apply_filters('sdm_download_window_target', $window_target);
 
 	$data  = '<form action="' . $action_url . '" method="post" class="sdm-download-form"' . $window_target . '>';
 	$data .= sdm_get_checkbox_for_termsncond();
 	$data .= '<div class="sdm-termscond-button">';
-	$data .= '<a href="#" class="' . esc_attr($class) . ' sdm_download_with_condition">' . $button_text_string . '</a>';
+	$data .= '<a href="#" class="' . esc_attr($class) . ' sdm_download_with_condition">' . esc_attr($button_text_string) . '</a>';
 	$data .= '</div>';
 	$data .= '<input type="hidden" name="download_id" value="' . $id . '" />';
 	$data .= '</form>';
@@ -402,6 +429,9 @@ function sdm_get_default_download_button_text( $download_id ) {
 	$meta_text    = get_post_meta( $download_id, 'sdm_download_button_text', true );
 
 	$button_text = ! empty( $meta_text ) ? $meta_text : $default_text;
+
+	//Allow other plugins to filter the button text
+	$button_text = apply_filters( 'sdm_download_button_text_filter', $button_text, $download_id );
 	return $button_text;
 }
 
@@ -704,4 +734,171 @@ function is_sdm_admin_page() {
 		return true;
 	}
 	return false;
+}
+
+function sdm_is_any_recaptcha_enabled(){
+	return sdm_is_recaptcha_v2_enabled() || sdm_is_recaptcha_v3_enabled();
+}
+
+function sdm_is_recaptcha_v2_enabled(){
+	$advanced_settings = get_option( 'sdm_advanced_options' );
+
+	return isset( $advanced_settings[ 'recaptcha_enable' ] ) && $advanced_settings[ 'recaptcha_enable' ] == 'on';
+}
+
+function sdm_is_recaptcha_v3_enabled(){
+	$advanced_settings = get_option( 'sdm_advanced_options' );
+
+	return isset( $advanced_settings[ 'recaptcha_v3_enable' ] ) && $advanced_settings[ 'recaptcha_v3_enable' ] == 'on';
+}
+
+function sdm_get_recaptcha_v3_html(){
+	wp_enqueue_script('sdm-recaptcha-v3-scripts-lib');
+
+	// This input field programmatically stores captcha token using js to send the token to the server with form submission.
+    return '<input type="hidden" class="sdm-g-recaptcha-v3-response" name="g-recaptcha-response"/>';
+}
+
+function sdm_dl_request_intermediate_page($content) {
+	wp_enqueue_script( 'sdm-intermediate-page-scripts', WP_SIMPLE_DL_MONITOR_URL . '/js/sdm_intermediate_page.js' , array(), WP_SIMPLE_DL_MONITOR_VERSION);
+
+    // The redirect url when leaving this intermediate page.
+    $download_id = isset($_REQUEST['download_id']) ? sanitize_text_field($_REQUEST['download_id']) : '';
+	$redirect_url = apply_filters('sdm_redirect_url_from_intermediate_page', '', $download_id);
+	?>
+	<!DOCTYPE html>
+	<html <?php language_attributes(); ?>>
+	<head>
+		<meta charset="<?php bloginfo( 'charset' ); ?>" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+		<?php wp_head(); ?>
+	</head>
+	<body <?php body_class(); ?>>
+	<?php wp_body_open(); ?>
+
+	<main class="sdm_dl_request_intermediate_page_content">
+		<?php echo wp_kses_post($content) ?>
+
+        <?php // The following renders after captcha verification successful and download has started. ?>
+        <div id="sdm_after_captcha_verification_content" class="hidden">
+            <p><?php _e('CAPTCHA verification successful. Once the download is complete, click the button below to return.', 'simple-download-monitor') ?></p>
+            <button id="sdm_intermediate_page_manual_redirection_btn" class="sdm_download white"><?php _e('Go Back', 'simple-download-monitor') ?></button>
+        </div>
+
+		<input type="hidden" id="sdm_redirect_form_intermediate_page_url" value="<?php echo esc_url_raw($redirect_url) ?>">
+	</main>
+
+	<?php wp_footer(); ?>
+	</body>
+	</html>
+	<?php
+	exit;
+}
+
+function sdm_load_template( $fancy, $args = array(), $load_once = false ) {
+	$fancy = strval( $fancy );
+	$template_name = 'sdm-fancy-' . $fancy . '.php';
+	$template_files = array(
+		'simple-download-monitor/'. $template_name,
+	);
+
+	//Filter hook to allow overriding of the template file path
+	$template_files = apply_filters( 'sdm_load_template_files', $template_files, $template_name);
+	
+	$located = locate_template($template_files);
+
+    $plugin_template_path = WP_SIMPLE_DL_MONITOR_TEMPLATE_DIR . '/sdm-fancy-'.$fancy.'.php';
+
+	if ( empty($located) && file_exists( $plugin_template_path ) ) {
+		$located = $plugin_template_path;
+	}
+
+	$tpl_html = '';
+
+	if ( ! empty( $located ) ) {
+		// Template file found in theme. Load it.
+		ob_start();
+
+		if ($load_once) {
+			include_once $located;
+		} else {
+			include $located;
+		}
+
+		$tpl_html = ob_get_clean();
+	}
+
+	return $tpl_html;
+}
+
+/**
+ * Checks if a download item can be viewed/downloaded by the current visitor.
+ *
+ * @param WP_Post $post_object The download item post object.
+ * @return bool
+ */
+function sdm_is_download_item_viewable( $post_object ) {
+
+    // Accept a post ID or a post object.
+    $post_object = get_post( $post_object );
+
+    if ( empty( $post_object ) ) {
+        return false;
+    }
+
+    $viewable = true;
+
+    if ( ! sdm_is_downloads_of_unpublished_items_allowed() ) {
+        // Published items with a publicly viewable status are allowed.
+        $viewable = is_post_publicly_viewable( $post_object );
+
+        // Allow a user who can edit this item (e.g. an admin previewing a draft) to access it.
+        if ( ! $viewable && current_user_can( 'edit_post', $post_object->ID ) ) {
+            $viewable = true;
+        }
+    }
+
+	//Filter to override the viewability check of a download item.
+    return apply_filters( 'sdm_is_download_item_viewable', $viewable, $post_object );
+}
+
+function sdm_is_downloads_of_unpublished_items_allowed() {
+    $main_opts = get_option( 'sdm_downloads_options' );
+    $allow_downloads_of_unpublished_items = empty( $main_opts['general_allow_downloads_of_unpublished_items'] ) ? false : true;
+
+    return $allow_downloads_of_unpublished_items;
+}
+
+
+function sdm_check_if_download_item_available($post_object) {
+    $message = '';
+    $success = true;
+
+    if ( empty($post_object) || $post_object->post_type != 'sdm_downloads' ) {
+        $message = __( 'Error! Incorrect download item id.', 'simple-download-monitor' );
+        $success  = false;
+    } else if ( ! sdm_is_download_item_viewable( $post_object ) ) {
+        $message =  __( 'Error! This download item is not available! It may be unpublished, private, or you may not have permission to view it.', 'simple-download-monitor' );
+        $success  = false;
+    }
+
+    return compact( 'success', 'message' );
+}
+
+function sdm_check_and_die_if_download_unavailable($post_object){
+    $result = sdm_check_if_download_item_available($post_object);
+
+    if ( empty($result['success']) ){
+        wp_die($result['message']);
+    }
+}
+
+function sdm_download_unavailable_msg_box( $msg ) {
+    $output = '<div class="sdm_yellow_box">';
+    $output .= '<p class="description">';
+    $output .= !empty($msg) ? esc_html($msg) : __('The download item is unavailable!', 'simple-download-monitor');
+    $output .= '</p>';
+    $output .= '</div>';
+
+    return $output;
 }
