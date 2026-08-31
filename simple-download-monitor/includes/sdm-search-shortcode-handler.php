@@ -7,7 +7,8 @@ function sdm_search_form_shortcode( $args ) {
 			'class'                  => '', // wrapper class
 			'placeholder'            => 'Search...', // placeholder for search input
 			'description_max_length' => 50, // short description symbols count
-			'button_text'            => __('Search', 'simple-download-monitor'),
+			'search_button_text'     => __('Search', 'simple-download-monitor'),
+			'button_text'            => '',
 		),
 		$args
 	);
@@ -76,7 +77,7 @@ function sdm_search_form_shortcode( $args ) {
 	$out .= '<form id="sdm_search_form" class="' . sanitize_html_class( $atts['class'], '' ) . '" method="POST">';
 	$out .= '<input type="search" class="search-field" name="sdm_search_term" value="' . $s_term . '" placeholder="' . sdm_sanitize_text( $atts['placeholder'] ) . '">';
 
-	$search_button_text = sanitize_text_field($atts['button_text']);
+	$search_button_text = isset($atts['search_button_text']) ? sanitize_text_field($atts['search_button_text']) : '';
 
 	$out .= '<input type="submit" class="sdm_search_submit" name="sdm_search_submit" value="'.esc_attr($search_button_text).'">';
 	$out .= '</form>';
@@ -90,13 +91,13 @@ function sdm_generate_search_result_using_template( $posts_collection, $args = a
 
 	if ( isset( $args['fancy'] ) && ! empty( $args['fancy'] ) ) {
 		if ( $args['fancy'] == '1' ) {
-			include_once WP_SIMPLE_DL_MONITOR_PATH . 'includes/templates/fancy1/sdm-fancy-1.php';
+			include_once WP_SIMPLE_DL_MONITOR_PATH . 'includes/templates-related/fancy1/sdm-fancy-1.php';
 			$s_results .= sdm_generate_fancy1_category_display_output( $posts_collection, $args );
 		} elseif ( $args['fancy'] == '2' ) {
-			include_once WP_SIMPLE_DL_MONITOR_PATH . 'includes/templates/fancy2/sdm-fancy-2.php';
+			include_once WP_SIMPLE_DL_MONITOR_PATH . 'includes/templates-related/fancy2/sdm-fancy-2.php';
 			$s_results .= sdm_generate_fancy2_category_display_output( $posts_collection, $args );
 		} elseif ( $args['fancy'] == '3' ) {
-			include_once WP_SIMPLE_DL_MONITOR_PATH . 'includes/templates/fancy3/sdm-fancy-3.php';
+			include_once WP_SIMPLE_DL_MONITOR_PATH . 'includes/templates-related/fancy3/sdm-fancy-3.php';
 			$s_results .= sdm_generate_fancy3_category_display_output( $posts_collection, $args );
 		}
 	} else {

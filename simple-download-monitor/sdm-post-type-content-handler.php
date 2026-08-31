@@ -48,7 +48,7 @@ function filter_sdm_post_type_content( $content ) {
 		$item_download_thumbnail  = get_post_meta( $id, 'sdm_upload_thumbnail', true );
 		$thumbnail_alt = get_the_title();
                 $thumbnail_alt = apply_filters ( 'sdm_post_single_download_page_thumbnail_alt', $thumbnail_alt, $id );
-		$isset_download_thumbnail = isset( $item_download_thumbnail ) && ! empty( $item_download_thumbnail ) ? '<img class="sdm_post_thumbnail_image" src="' . $item_download_thumbnail . '" alt = "' . esc_html($thumbnail_alt) . '" />' : '';
+		$isset_download_thumbnail = isset( $item_download_thumbnail ) && ! empty( $item_download_thumbnail ) ? '<img class="sdm_post_thumbnail_image" src="' . esc_url($item_download_thumbnail) . '" alt = "' . esc_html($thumbnail_alt) . '" />' : '';
 
 		//Get item title
 		$item_title = get_the_title( $id );
@@ -84,7 +84,8 @@ function filter_sdm_post_type_content( $content ) {
 		// See if new window parameter is set
 		$new_window    = get_post_meta( $id, 'sdm_item_new_window', true );
 		$window_target = empty( $new_window ) ? '_self' : '_blank';
-
+		$window_target = apply_filters('sdm_download_window_target', $window_target);
+		
 		$download_url = sdm_get_standard_download_url_from_id($id);
 		$download_button_code = '<a href="' . $download_url . '" class="sdm_download ' . $def_color . '" title="' . esc_html($isset_item_title) . '" target="' . $window_target . '">' . esc_attr($button_text_string) . '</a>';
 
@@ -97,8 +98,7 @@ function filter_sdm_post_type_content( $content ) {
 		}
 
 		//Check if reCAPTCHA enabled
-		$recaptcha_enable = isset( $main_advanced_opts['recaptcha_enable'] ) ? true : false;
-		if ( $recaptcha_enable && $cpt_is_password == 'no' ) {
+		if ( sdm_is_any_recaptcha_enabled() && $cpt_is_password == 'no' ) {
 			$download_button_code = sdm_get_download_form_with_recaptcha( $id, array(), 'sdm_download ' . $def_color );
 		}
 
@@ -141,6 +141,11 @@ function filter_sdm_post_type_content( $content ) {
 			$content .= apply_filters( 'sdm_post_single_download_page_disabled_dl_button_msg', $msg );
 			$content .= '</div>';
 		} else {
+
+			//Filter hook to allow other plugins to add their own HTML code before the download button
+			$extra_html_before_button = apply_filters( 'sdm_before_download_button', '', $id, $params );
+			$content .= $extra_html_before_button;
+
 			$download_link = '<div class="sdm_download_link">' . $download_button_code . '</div>';
 			$content      .= '<div class="sdm_post_download_section">' . apply_filters(
 				'sdm_single_page_dl_link',
